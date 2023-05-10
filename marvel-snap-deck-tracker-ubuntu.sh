@@ -4,6 +4,7 @@ VERSION="1.2.0"
 SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 SCRIPT_FILE=$(basename $BASH_SOURCE)
 INSTALL_PATH="/etc/marvel-snap-tracker/"
+TRACKER_GIT_REPO=${TRACKER_GIT_REPO:-"https://github.com/Razviar/marvelsnaptracker"}
 
 source $SCRIPT_PATH/utils/main.sh
 
@@ -16,17 +17,17 @@ echo -e "${LPURPLE}Attention please:${NC} This is an Ubuntu binary builder for t
 
 #Checking for "sudo"
 if [ "$EUID" -ne 0 ]
-then 
+then
     echo ""
     echo -e "${RED}Please, run with 'sudo'.${NC}"
 
     trap : 0
     exit 0
-fi    
+fi
 
 trap 'abort' 0
 
-#Update if new versions  
+#Update if new versions
 auto-update true
 
 echo ""
@@ -36,9 +37,9 @@ apt update
 apt-install lxd-installer
 
 echo ""
-title "Setting up the LXC/LXD container:"    
+title "Setting up the LXC/LXD container:"
 if [ $(lxc storage list | grep -c "CREATED") -eq 0 ];
-then    
+then
     echo "Initializing the LXC/LXD container..."
     lxd init --auto
 else
@@ -47,7 +48,7 @@ fi
 
 container="marvel-snap-deck-tracker-builder"
 if [ $(lxc list | grep -c "$container") -eq 0 ];
-then    
+then
     lxc launch ubuntu:22.04 $container
 else
     echo "LXC/LXD image already exists, skipping..."
@@ -58,6 +59,7 @@ title "Building the binary:"
 echo "Copying the build script within the container..."
 lxc file push --recursive $SCRIPT_PATH ${container}/etc/
 
+lxc config set $container environment.TRACKER_GIT_REPO $TRACKER_GIT_REPO
 echo "Running the build script within the container..."
 lxc exec $container -- /bin/bash /etc/marvelsnaptracker-for-ubuntu/utils/build.sh
 
@@ -68,39 +70,39 @@ lxc file pull $container/root/marvelsnaptracker/out/'Marvel Snap Tracker-linux-x
 echo "Setting up permissions..."
 rm -rf build
 mv Marvel\ Snap\ Tracker-linux-x64/ build
-chown -R $SUDO_USER:$SUDO_USER build 
+chown -R $SUDO_USER:$SUDO_USER build
 
 echo
 question "Do you want to install the application? " "[Y/n]"
 read input
 
 if [[ "$input" == "n" ]];
-then        
+then
     done-ok
 else
     if [ ! -z "$input" ];
-    then        
+    then
         echo
-    fi  
-    
+    fi
+
     question "Please, set the installation path: " "[$INSTALL_PATH]"
     read input
 
     if [ -z "$input" ];
-    then        
+    then
         input=$INSTALL_PATH
     else
         echo
     fi
 
-    title "Installing the app into " $input ":"    
+    title "Installing the app into " $input ":"
     echo "Creating the destination folder..."
     mkdir -p $input
-    
+
     echo "Copying files..."
     cp -Rf build/* $input
 
-    echo "Creating a shortcut into the app list..."    
+    echo "Creating a shortcut into the app list..."
     dst="utils/marvel-snap-tracker.desktop"
     src="${dst}.template"
 
@@ -108,7 +110,7 @@ else
     echo "PATH: $input"
 
     sed -i "s|<INSTALL_PATH>|$input|g" $dst
-    chown -R $SUDO_USER:$SUDO_USER $dst  
+    chown -R $SUDO_USER:$SUDO_USER $dst
     run-in-user-session xdg-desktop-menu install $dst
     rm $dst
 fi

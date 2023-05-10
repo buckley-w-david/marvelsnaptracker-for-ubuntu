@@ -1,6 +1,7 @@
 #!/bin/bash
 SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source $SCRIPT_PATH/./main.sh
+TRACKER_GIT_REPO=${TRACKER_GIT_REPO:-"https://github.com/Razviar/marvelsnaptracker"}
 
 echo
 title "Updating apt sources:"
@@ -9,7 +10,7 @@ apt update
 echo
 title "Installing dependencies:"
 apt-install "curl"
-curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash - 
+curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 
 apt-install "nodejs"
 apt-install "build-essential"
@@ -31,10 +32,10 @@ apt-install "python3-dbusmock"
 apt-install "openjdk-8-jre"
 
 if [ $(ls | grep -c "marvelsnaptracker") -eq 0 ];
-then    
+then
     echo
     title "Downloading the Marvel Snap Deck Tracker:"
-    git clone https://github.com/Razviar/marvelsnaptracker.git
+    git clone $TRACKER_GIT_REPO
     cd marvelsnaptracker
 else
     echo
