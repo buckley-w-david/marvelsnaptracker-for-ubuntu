@@ -38,11 +38,19 @@ then
     git clone $TRACKER_GIT_REPO
     cd marvelsnaptracker
 else
-    echo
-    title "Updating the Marvel Snap Deck Tracker:"
-    cd marvelsnaptracker
-    git -C . reset --hard origin/master
-    git pull
+    GIT_REPO=$(git -C "marvelsnaptracker" remote get-url origin)
+    if [ "$TRACKER_GIT_REPO" = "$GIT_REPO" ]; then
+        echo
+        cd marvelsnaptracker
+        title "Updating the Marvel Snap Deck Tracker:"
+        git -C . reset --hard origin/master
+        git pull
+    else
+        rm -rf marvelsnaptracker
+        title "Downloading the Marvel Snap Deck Tracker:"
+        git clone $TRACKER_GIT_REPO
+        cd marvelsnaptracker
+    fi
 fi
 
 echo
